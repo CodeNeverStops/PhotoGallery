@@ -1,12 +1,20 @@
 package io.github.uv_lab.photogallery;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Created by youwei on 2016/11/8.
  */
 
 public class GalleryItem {
+
+    @SerializedName("title")
     private String mCaption;
+
+    @SerializedName("id")
     private String mId;
+
+    @SerializedName("url_s")
     private String mUrl;
 
     public String getCaption() {
