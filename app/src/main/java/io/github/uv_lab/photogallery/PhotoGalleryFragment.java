@@ -1,16 +1,18 @@
 package io.github.uv_lab.photogallery;
 
+import android.graphics.Point;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.TextView;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,9 +23,11 @@ import java.util.List;
 public class PhotoGalleryFragment extends Fragment {
 
     private static final String TAG = "PhotoGalleryFragment";
+    private static final int ITEM_WIDTH = 300;
 
     private RecyclerView mPhotoRecyclerView;
     private List<GalleryItem> mItems = new ArrayList<>();
+    private GridLayoutManager mGridLayoutManager;
 
     public static PhotoGalleryFragment newInstance() {
         return new PhotoGalleryFragment();
@@ -41,13 +45,33 @@ public class PhotoGalleryFragment extends Fragment {
                              Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_photo_gallery, container, false);
 
+        int spanCount = calcSpanCount();
+        mGridLayoutManager = new GridLayoutManager(getActivity(), spanCount);
+
         mPhotoRecyclerView = (RecyclerView) v
                 .findViewById(R.id.fragment_photo_gallery_recycler_view);
-        mPhotoRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 3));
+        mPhotoRecyclerView.setLayoutManager(mGridLayoutManager);
+        mPhotoRecyclerView.getViewTreeObserver()
+                .addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        int spanCount = calcSpanCount();
+                        mGridLayoutManager.setSpanCount(spanCount);
+                    }
+                });
 
         setupAdapter();
 
         return v;
+    }
+
+    private int calcSpanCount() {
+        Display display = getActivity().getWindowManager().getDefaultDisplay();
+        Point point = new Point();
+        display.getSize(point);
+        int width = point.x;
+        int spanCount = Math.round(width / ITEM_WIDTH);
+        return spanCount;
     }
 
     private void setupAdapter() {
