@@ -2,10 +2,12 @@ package io.github.uv_lab.photogallery;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.nfc.Tag;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
 import android.util.Log;
+import android.util.LruCache;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,6 +25,7 @@ public class ThumbnailDownloader<T> extends HandlerThread {
     private ConcurrentHashMap<T,String> mRequestMap = new ConcurrentHashMap<>();
     private Handler mResponseHandler;
     private ThumbnailDownloadListener<T> mThumbnailDownloadListener;
+    private LruCache<String, Bitmap> mMemoryCache;
 
     public interface ThumbnailDownloadListener<T> {
         void onThumbnailDownloaded(T target, Bitmap thumbnail);
@@ -35,6 +38,10 @@ public class ThumbnailDownloader<T> extends HandlerThread {
     public ThumbnailDownloader(Handler responseHandler) {
         super(TAG);
         mResponseHandler = responseHandler;
+
+        int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+        int cacheSize = maxMemory / 8;
+        mMemoryCache = new LruCache<String, Bitmap>(cacheSize);
     }
 
     @Override
@@ -81,10 +88,21 @@ public class ThumbnailDownloader<T> extends HandlerThread {
                 return;
             }
 
-            byte[] bitmapBytes = new FlickrFetchr().getUrlBytes(url);
-            final Bitmap bitmap = BitmapFactory
-                    .decodeByteArray(bitmapBytes, 0, bitmapBytes.length);
-            Log.i(TAG, "Bitmap created");
+            Bitmap cache = getBitmapFromCache(url);
+            Bitmap tmp = null;
+
+            if (cache == null) {
+                byte[] bitmapBytes = new FlickrFetchr().getUrlBytes(url);
+                tmp = BitmapFactory
+                        .decodeByteArray(bitmapBytes, 0, bitmapBytes.length);
+                Log.i(TAG, "Bitmap created");
+            } else {
+                tmp = cache;
+                Log.i(TAG, "Bitmap cached");
+            }
+
+            final Bitmap bitmap = tmp;
+            addBitmapToCache(url, bitmap);
 
             mResponseHandler.post(new Runnable() {
                 public void run() {
@@ -99,5 +117,13 @@ public class ThumbnailDownloader<T> extends HandlerThread {
         } catch (IOException ioe) {
             Log.e(TAG, "Error downloading image", ioe);
         }
+    }
+
+    private void addBitmapToCache(String key, Bitmap bitmap) {
+        mMemoryCache.put(key, bitmap);
+    }
+
+    private Bitmap getBitmapFromCache(String key) {
+        return mMemoryCache.get(key);
     }
 }
