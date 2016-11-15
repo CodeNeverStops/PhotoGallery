@@ -18,8 +18,6 @@ import android.widget.ImageView;
 import java.util.ArrayList;
 import java.util.List;
 
-import static android.R.attr.bitmap;
-
 /**
  * Created by youwei on 2016/11/7.
  */
@@ -127,6 +125,22 @@ public class PhotoGalleryFragment extends Fragment {
             Drawable placeholder = getResources().getDrawable(R.drawable.bill_up_close);
             photoHolder.bindDrawable(placeholder);
             mThumbnailDownloader.queueThumbnail(photoHolder, galleryItem.getUrl());
+            for (int i = 1; i <= 10; i++) {
+                int prePosition = position - i;
+                if (prePosition < 0) {
+                    break;
+                }
+                Log.i(TAG, "preload position: " + prePosition);
+                mThumbnailDownloader.preloadThumbnail(mGalleryItems.get(prePosition).getUrl());
+            }
+            for (int j = 1; j <= 10; j++) {
+                int postPosition = position + j;
+                if (postPosition > mGalleryItems.size() - 1) {
+                    break;
+                }
+                Log.i(TAG, "post position: " + postPosition);
+                mThumbnailDownloader.preloadThumbnail(mGalleryItems.get(postPosition).getUrl());
+            }
         }
 
         @Override

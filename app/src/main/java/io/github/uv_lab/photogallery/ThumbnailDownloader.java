@@ -2,12 +2,10 @@ package io.github.uv_lab.photogallery;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.nfc.Tag;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
 import android.util.Log;
-import android.util.LruCache;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,13 +17,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ThumbnailDownloader<T> extends HandlerThread {
     private static final String TAG = "ThumbnailDownloader";
     private static final int MESSAGE_DOWNLOAD = 0;
+    private static final int MESSAGE_PRELOAD = 1;
 
     private Boolean mHasQuit = false;
     private Handler mRequestHandler;
     private ConcurrentHashMap<T,String> mRequestMap = new ConcurrentHashMap<>();
     private Handler mResponseHandler;
     private ThumbnailDownloadListener<T> mThumbnailDownloadListener;
-    private LruCache<String, Bitmap> mMemoryCache;
+    private BitmapCache mCache;
 
     public interface ThumbnailDownloadListener<T> {
         void onThumbnailDownloaded(T target, Bitmap thumbnail);
@@ -38,10 +37,7 @@ public class ThumbnailDownloader<T> extends HandlerThread {
     public ThumbnailDownloader(Handler responseHandler) {
         super(TAG);
         mResponseHandler = responseHandler;
-
-        int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
-        int cacheSize = maxMemory / 8;
-        mMemoryCache = new LruCache<String, Bitmap>(cacheSize);
+        mCache = new BitmapCache();
     }
 
     @Override
@@ -53,6 +49,20 @@ public class ThumbnailDownloader<T> extends HandlerThread {
                     T target = (T) msg.obj;
                     Log.i(TAG, "Got a request for URL: " + mRequestMap.get(target));
                     handleRequest(target);
+                } else if (msg.what == MESSAGE_PRELOAD) {
+                    String url = (String) msg.obj;
+                    try {
+                        Bitmap cache = mCache.getBitmapFromCache(url);
+                        if (cache == null) {
+                            byte[] bitmapBytes = new FlickrFetchr().getUrlBytes(url);
+                            Bitmap bitmap = BitmapFactory
+                                    .decodeByteArray(bitmapBytes, 0, bitmapBytes.length);
+                            mCache.addBitmapToCache(url, bitmap);
+                            Log.i(TAG, "Bitmap preload");
+                        }
+                    } catch (IOException ioe) {
+
+                    }
                 }
             }
         };
@@ -76,8 +86,17 @@ public class ThumbnailDownloader<T> extends HandlerThread {
         }
     }
 
+    public void preloadThumbnail(String url) {
+        if (url == null) {
+            return;
+        }
+        mRequestHandler.obtainMessage(MESSAGE_PRELOAD, url)
+                .sendToTarget();
+    }
+
     public void clearQueue() {
         mRequestHandler.removeMessages(MESSAGE_DOWNLOAD);
+        mRequestHandler.removeMessages(MESSAGE_PRELOAD);
     }
 
     private void handleRequest(final T target) {
@@ -88,7 +107,7 @@ public class ThumbnailDownloader<T> extends HandlerThread {
                 return;
             }
 
-            Bitmap cache = getBitmapFromCache(url);
+            Bitmap cache = mCache.getBitmapFromCache(url);
             Bitmap tmp = null;
 
             if (cache == null) {
@@ -102,7 +121,7 @@ public class ThumbnailDownloader<T> extends HandlerThread {
             }
 
             final Bitmap bitmap = tmp;
-            addBitmapToCache(url, bitmap);
+            mCache.addBitmapToCache(url, bitmap);
 
             mResponseHandler.post(new Runnable() {
                 public void run() {
@@ -117,13 +136,5 @@ public class ThumbnailDownloader<T> extends HandlerThread {
         } catch (IOException ioe) {
             Log.e(TAG, "Error downloading image", ioe);
         }
-    }
-
-    private void addBitmapToCache(String key, Bitmap bitmap) {
-        mMemoryCache.put(key, bitmap);
-    }
-
-    private Bitmap getBitmapFromCache(String key) {
-        return mMemoryCache.get(key);
     }
 }
