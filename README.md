@@ -8,3 +8,4 @@ Android编程权威指南（第二版）中第23章~第28章的例子
     * [挑战练习: 动态调整网格列](https://github.com/uv-lab/PhotoGallery/tree/exercise23.12)
 * [Looper、Handler和HandlerThread](https://github.com/uv-lab/PhotoGallery/tree/ch24)
     * [挑战练习：预加载以及缓存](https://github.com/uv-lab/PhotoGallery/tree/exercise24.7)
+* [搜索](https://github.com/uv-lab/PhotoGallery/tree/ch25)
