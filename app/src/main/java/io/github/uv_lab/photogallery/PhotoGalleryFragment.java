@@ -7,7 +7,6 @@ import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
@@ -182,7 +181,9 @@ public class PhotoGalleryFragment extends VisibleFragment {
 
         @Override
         public void onClick(View v) {
-            Intent i = new Intent(Intent.ACTION_VIEW, mGalleryItem.getPhotoPageUri());
+//            Intent i = new Intent(Intent.ACTION_VIEW, mGalleryItem.getPhotoPageUri());
+            Intent i = PhotoPageActivity
+                    .newIntent(getActivity(), mGalleryItem.getPhotoPageUri());
             startActivity(i);
         }
     }
