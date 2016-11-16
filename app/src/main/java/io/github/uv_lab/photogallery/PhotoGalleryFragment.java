@@ -1,10 +1,8 @@
 package io.github.uv_lab.photogallery;
 
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.nfc.Tag;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -24,14 +22,11 @@ import android.widget.ImageView;
 import java.util.ArrayList;
 import java.util.List;
 
-import static android.R.attr.bitmap;
-import static android.R.attr.switchMinWidth;
-
 /**
  * Created by youwei on 2016/11/7.
  */
 
-public class PhotoGalleryFragment extends Fragment {
+public class PhotoGalleryFragment extends VisibleFragment {
 
     private static final String TAG = "PhotoGalleryFragment";
 
