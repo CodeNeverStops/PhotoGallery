@@ -13,3 +13,4 @@ Android编程权威指南（第二版）中第26章的例子
 * [后台服务](https://github.com/uv-lab/PhotoGallery/tree/ch26)
 * [broadcast intent](https://github.com/uv-lab/PhotoGallery/tree/ch27)
 * [网页浏览](https://github.com/uv-lab/PhotoGallery/tree/ch28)
+    * [挑战练习：使用后退键浏览历史网页](https://github.com/uv-lab/PhotoGallery/tree/exercise28.7)
