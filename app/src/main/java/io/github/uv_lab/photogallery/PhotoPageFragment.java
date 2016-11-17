@@ -1,7 +1,9 @@
 package io.github.uv_lab.photogallery;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcel;
 import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -9,9 +11,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
+
+import java.util.List;
 
 /**
  * Created by youwei on 2016/11/16.
@@ -67,7 +72,12 @@ public class PhotoPageFragment extends VisibleFragment {
         });
         mWebView.setWebViewClient(new WebViewClient() {
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                return false;
+                if (url.startsWith("http:") || url.startsWith("https:")) {
+                    return false;
+                }
+                Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                getActivity().startActivity(i);
+                return true;
             }
         });
         mWebView.loadUrl(mUri.toString());
